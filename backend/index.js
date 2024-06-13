@@ -2,40 +2,27 @@ import express from "express";
 import axios from 'axios';
 import dotenv from 'dotenv';
 import CircularJSON from 'circular-json';
+import { PrismaClient } from "@prisma/client";
+
+const prisma =new PrismaClient();
 
 dotenv.config();
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 8001;
 
 app.use(express.json());
-
 app.get('/', (req, res) => {
     res.status(200).json({
         message: "No worry"
     });
 });
 
-app.post('/', (req, res) => {
-    const { user, password } = req.body;
-    console.log(user);
-
-    if (!user || !password) {
-        return res.status(400).json({
-            message: 'Credentials not provided'
-        });
-    }
-
-    return res.status(200).json({
-        user,
-        password,
-        message: "User has been received successfully"
-    });
-});
 
 app.post('/sendRequest', async (req, res) => {
     try {
         const { value, url, body, header } = req.body;
+        
         console.log(body)
 
         if (!value || !url) {
@@ -43,6 +30,15 @@ app.post('/sendRequest', async (req, res) => {
                 message: "Please provide a URL and request type"
             });
         }
+
+        const Newurl = await prisma.request.create({
+            data:{
+            request:url
+
+
+            }
+        });
+
 
         if (value === "POST" && !body) {
             return res.status(400).json({
@@ -81,13 +77,11 @@ app.post('/sendRequest', async (req, res) => {
             });
         }
 
-        return res.status(200).json({ response: response.data });
+        return res.status(200).json({ response: response.data , url:Newurl });
     } catch (error) {
-        // Log the error using CircularJSON to handle circular references
         const errorDetails = CircularJSON.stringify(error, null, 2);
         console.error(errorDetails);
 
-        // Send a simplified error response to the client
         return res.status(500).json({
             message: error.message,
             status: error.response?.status || 500,
@@ -100,6 +94,23 @@ app.post('/sendRequest', async (req, res) => {
         });
     }
 });
+
+
+app.get('/getAll',async(req,res)=>{
+    try {
+        const url = await prisma.request.findMany({});
+        res.status(200).json({
+            url
+        })
+        
+    } catch (error) {
+        res.status(500).json({
+            message:error.message
+        })
+
+        
+    }
+})
 
 app.listen(port, () => {
     console.log(`Server has started on port ${port}`);

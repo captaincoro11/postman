@@ -5,7 +5,9 @@ module.exports = {
     extend: {},
     colors:{
       hello:"#161212de",
-      orange:"orange"
+      orange:"orange",
+      red:"red",
+      blue:"blue",
     }
   },
   plugins: [],
